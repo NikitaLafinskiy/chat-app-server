@@ -5,16 +5,16 @@ import {
   BaseEntity,
   OneToOne,
   JoinColumn,
-} from 'typeorm';
-import { User } from './User.entity';
+} from "typeorm";
+import { User } from "./User.entity";
 
-@Entity('refreshToken')
+@Entity("refreshToken")
 export class RefreshToken extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
-  @Column({ type: 'longtext' })
+  @Column({ type: "text" })
   token: string;
   @OneToOne(() => User, (user) => user.id)
-  @JoinColumn({ name: 'userID', referencedColumnName: 'id' })
-  userID: User['id'];
+  @JoinColumn({ name: "userID", referencedColumnName: "id" })
+  userID: User["id"];
 }

@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { ApiError } from '../exceptions/ApiError';
+import { Request, Response, NextFunction } from "express";
+import { ApiError } from "../exceptions/ApiError";
 
 export const errHandler = (
   err: Error,
@@ -9,6 +9,7 @@ export const errHandler = (
 ) => {
   if (err instanceof ApiError) {
     res.status(err.status).json({ msg: err.message, name: err.name });
+    return;
   }
-  res.status(500).json({ name: 'Unknown error', msg: err.message });
+  res.status(500).json({ name: "Unknown error", msg: err.message });
 };

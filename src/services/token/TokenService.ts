@@ -1,9 +1,9 @@
-import { Secret, sign, verify } from 'jsonwebtoken';
-import { IUser } from '../../types/models/IUser.d';
-import { RefreshToken } from '../../entity';
-import { ApiError } from '../../exceptions/ApiError';
-import { User } from '../../entity';
-import { UserDTO } from '../../dtos/User.dto';
+import { JwtPayload, Secret, sign, verify } from "jsonwebtoken";
+import { IUser } from "../../types/models/IUser.d";
+import { RefreshToken } from "../../entity";
+import { ApiError } from "../../exceptions/ApiError";
+import { User } from "../../entity";
+import { UserDTO } from "../../dtos/User.dto";
 
 export class TokenService {
   static generateTokens(user: IUser): {
@@ -11,10 +11,10 @@ export class TokenService {
     refreshToken: string;
   } {
     const refreshToken = sign(user, process.env.JWT_REFRESH_SECRET as Secret, {
-      expiresIn: '30d',
+      expiresIn: "30d",
     });
     const accessToken = sign(user, process.env.JWT_ACCESS_TOKEN as Secret, {
-      expiresIn: '5m',
+      expiresIn: "5m",
     });
 
     return { accessToken, refreshToken };
@@ -26,7 +26,7 @@ export class TokenService {
   ): Promise<{ refreshToken: RefreshToken }> {
     const refreshToken = await RefreshToken.findOneBy({ userID });
     if (refreshToken) {
-      throw ApiError.BadRequestError('Refresh token is already stored');
+      throw ApiError.BadRequestError("Refresh token is already stored");
     }
     const newToken = await RefreshToken.create({ token, userID }).save();
 
@@ -49,19 +49,23 @@ export class TokenService {
     );
 
     if (!isValidToken) {
-      throw ApiError.UnauthorizedError('Refresh token has expired');
+      throw ApiError.UnauthorizedError("Refresh token has expired");
     }
 
     return { isValid: true, refreshToken };
   }
 
-  static validateAccessToken(token: string) {
-    const isValid = verify(token, process.env.JWT_ACCESS_TOKEN as Secret);
-    if (!isValid) {
-      throw ApiError.UnauthorizedError('Access token has expired');
-    }
+  static validateAccessToken(token: string): {
+    isValid: boolean;
+    payload: JwtPayload | string;
+  } {
+    try {
+      const payload = verify(token, process.env.JWT_ACCESS_TOKEN as Secret);
 
-    return { isValid: true };
+      return { payload, isValid: true };
+    } catch (err) {
+      return { payload: "", isValid: false };
+    }
   }
 
   static async updateAccessToken(
