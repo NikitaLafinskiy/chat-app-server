@@ -28,7 +28,7 @@ const start = async () => {
     database: process.env.POSTGRESQL_DB_NAME,
     synchronize: true,
     logging: false,
-    dropSchema: true,
+    dropSchema: false,
     entities: [User, RefreshToken, Conversation, Message],
     subscribers: [],
     migrations: [],

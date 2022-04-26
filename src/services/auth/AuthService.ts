@@ -12,8 +12,9 @@ export class AuthService {
     password: string
   ): Promise<{ refreshToken: string; accessToken: string; user: UserDTO }> {
     const checkUser = await User.findOneBy({ username });
+
     if (checkUser) {
-      throw new Error(`User ${username} already exists`);
+      throw ApiError.UnauthorizedError(`User ${username} already exists`);
     }
 
     const hashedPassword = await hash(password, 10);
@@ -28,7 +29,7 @@ export class AuthService {
     const { ...userDTO } = new UserDTO(user);
 
     const { refreshToken, accessToken } = TokenService.generateTokens(userDTO);
-    await TokenService.saveRefreshToken(userDTO.id, refreshToken);
+    await TokenService.saveRefreshToken(user, refreshToken);
 
     return { refreshToken, accessToken, user: userDTO };
   }
@@ -49,7 +50,7 @@ export class AuthService {
 
     const { ...userDTO } = new UserDTO(user);
     const { refreshToken, accessToken } = TokenService.generateTokens(userDTO);
-    await TokenService.saveRefreshToken(userDTO.id, refreshToken);
+    await TokenService.saveRefreshToken(user, refreshToken);
 
     return { refreshToken, accessToken, user: userDTO };
   }

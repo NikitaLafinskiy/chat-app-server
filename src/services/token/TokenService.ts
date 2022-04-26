@@ -21,14 +21,16 @@ export class TokenService {
   }
 
   static async saveRefreshToken(
-    userID: number,
+    user: User,
     token: string
   ): Promise<{ refreshToken: RefreshToken }> {
-    const refreshToken = await RefreshToken.findOneBy({ userID });
+    const refreshToken = await RefreshToken.findOne({
+      where: { user: { id: user.id } },
+    });
     if (refreshToken) {
       throw ApiError.BadRequestError("Refresh token is already stored");
     }
-    const newToken = await RefreshToken.create({ token, userID }).save();
+    const newToken = await RefreshToken.create({ token, user }).save();
 
     return { refreshToken: newToken };
   }
@@ -73,7 +75,7 @@ export class TokenService {
   ): Promise<{ accessToken: string }> {
     const { refreshToken } = await this.validateRefreshToken(token);
 
-    const user = await User.findOneBy({ id: refreshToken.userID });
+    const user = await User.findOneBy({ id: refreshToken.user.id });
     const { ...userDTO } = new UserDTO(user as User);
 
     const { accessToken } = this.generateTokens(userDTO);

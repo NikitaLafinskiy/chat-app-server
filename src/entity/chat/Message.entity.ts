@@ -16,9 +16,7 @@ export class Message extends BaseEntity {
   body: string;
   @Column()
   from: number;
-  @Column()
-  to: number;
   @ManyToOne(() => Conversation, (conversation) => conversation.messages)
-  @JoinColumn({ name: "conversationID", referencedColumnName: "id" })
+  @JoinColumn({ name: "conversation", referencedColumnName: "id" })
   conversation: Conversation;
 }
