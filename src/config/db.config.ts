@@ -4,12 +4,12 @@ require("dotenv").config();
 
 export const AppDataSource = new DataSource({
   type: "postgres",
-  host: "localhost",
+  host: process.env.POSTGRESQL_HOST || "localhost",
   port: 5432,
   username: process.env.POSTGRESQL_USERNAME,
   password: process.env.POSTGRESQL_PASSWORD,
   database: process.env.POSTGRESQL_DB_NAME,
-  synchronize: true,
+  synchronize: false,
   logging: false,
   dropSchema: false,
   entities: [User, RefreshToken, Conversation, Message],
