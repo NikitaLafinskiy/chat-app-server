@@ -5,8 +5,8 @@ import { IMessagePayload } from "../../types/models/IMessage";
 import { Server } from "socket.io";
 
 export const initSocketListeners = (socket: SocketType, io: Server) => {
-  socket.on("queryUsers", (query) => {
-    SearchListeners.queryUsers(query, socket);
+  socket.on("queryUsers", (data) => {
+    SearchListeners.queryUsers(data, socket);
   });
   socket.on("createConversation", async (data) => {
     await ConversationListeners.createConversation(data, socket);

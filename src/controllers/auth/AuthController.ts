@@ -34,18 +34,19 @@ export class AuthController {
   static async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { username, password } = req.body;
-      const isValid = AuthValidators.registerValidator.validate({
+      const isValid = await AuthValidators.registerValidator.validate({
         username,
         password,
       });
+
       if (!isValid) {
         throw ApiError.BadRequestError("Invalid username or password", isValid);
       }
+
       const { refreshToken, accessToken } = await AuthService.login(
         username,
         password
       );
-
       res.cookie("refreshToken", refreshToken, {
         maxAge: 1000 * 60 * 60 * 24 * 30,
       });

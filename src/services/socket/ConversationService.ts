@@ -1,6 +1,5 @@
-import { Conversation, User, Message } from "../../entity";
+import { Conversation, Message } from "../../entity";
 import { IUser } from "../../types/models/IUser";
-import { ApiError } from "../../exceptions/ApiError";
 import { IConversation } from "../../types/models/IConversation";
 
 export class ConversationService {

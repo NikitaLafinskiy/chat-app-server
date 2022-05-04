@@ -1,9 +1,10 @@
 import { Socket } from "socket.io";
 import { IUser } from "./models/IUser.d";
 import { IMessagePayload } from "./models/IMessage.d";
+import { UserDTO } from "../dtos/User.dto";
 
 interface ClientToServer {
-  queryUsers: (query: string) => void;
+  queryUsers: ({ query: string, user: IUser }) => void;
   createConversation: (data: {
     isPrivate: boolean;
     users: IUser[];
@@ -16,7 +17,7 @@ interface ClientToServer {
 }
 
 interface ServerToClient {
-  queryUsersRes: (data: { users: IUser[]; error: string }) => void;
+  queryUsersRes: (data: { users: (UserDTO | null)[]; error: string }) => void;
   conversationCreated: () => void;
   sendMessage: (payload: IMessage) => void;
 }

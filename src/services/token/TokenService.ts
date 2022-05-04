@@ -27,11 +27,14 @@ export class TokenService {
     const refreshToken = await RefreshToken.findOne({
       where: { user: { id: user.id } },
     });
-    if (refreshToken) {
-      throw ApiError.BadRequestError("Refresh token is already stored");
-    }
-    const newToken = await RefreshToken.create({ token, user }).save();
 
+    if (refreshToken) {
+      refreshToken.token = token;
+      refreshToken.save();
+      return { refreshToken };
+    }
+
+    const newToken = await RefreshToken.create({ token, user }).save();
     return { refreshToken: newToken };
   }
 
