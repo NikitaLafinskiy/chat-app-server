@@ -8,7 +8,6 @@ export const initIO = (server: ServerType) => {
   });
 
   io.on("connection", (socket) => {
-    //socket.join("AN ARRAY OF CONVERSATIONS RETRIEVED FROM USER")
     initSocketListeners(socket, io);
   });
 };

@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "npx ts-node src/app.ts",
     "dev": "nodemon --exec ts-node src/app.ts"
   },
   "keywords": [],
