@@ -13,7 +13,10 @@ const app = express();
 
 const start = async () => {
   await AppDataSource.initialize();
-
+  console.log(process.env.POSTGRESQL_DB_NAME);
+  console.log(process.env.POSTGRESQL_USERNAME);
+  console.log(process.env.POSTGRESQL_PASSWORD);
+  console.log(process.env.POSTGRESQL_HOST);
   // app.use(cors({ origin: "http://localhost:3000", credentials: true }));
   app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
   app.use(express.json());
