@@ -15,7 +15,7 @@ export const AppDataSource = new DataSource({
   entities: [User, RefreshToken, Conversation, Message],
   subscribers: [],
   migrations: [],
-  ssl: false,
+  ssl: true,
   extra: {
     ssl: {
       rejectUnauthorized: false,
