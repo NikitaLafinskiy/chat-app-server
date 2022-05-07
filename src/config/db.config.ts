@@ -9,12 +9,12 @@ export const AppDataSource = new DataSource({
   username: process.env.PGUSER,
   password: process.env.PGPASSWORD,
   database: process.env.PGDATABASE,
-  synchronize: false,
-  logging: true,
+  synchronize: true,
+  logging: false,
   dropSchema: false,
   entities: [User, RefreshToken, Conversation, Message],
   subscribers: [],
-  migrations: [],
+  migrations: ["./migrations/*.js"],
   ssl: process.env.PGHOST ? true : false,
   extra: {
     ssl: {
