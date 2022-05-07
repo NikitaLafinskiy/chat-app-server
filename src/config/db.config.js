@@ -12,12 +12,12 @@ exports.AppDataSource = new typeorm_1.DataSource({
     password: process.env.PGPASSWORD,
     database: process.env.PGDATABASE,
     synchronize: false,
-    logging: false,
+    logging: true,
     dropSchema: false,
     entities: [entity_1.User, entity_1.RefreshToken, entity_1.Conversation, entity_1.Message],
     subscribers: [],
     migrations: [],
-    ssl: true,
+    ssl: process.env.PGHOST ? true : false,
     extra: {
         ssl: {
             rejectUnauthorized: false,

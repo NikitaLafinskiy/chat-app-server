@@ -24,10 +24,6 @@ const PORT = process.env.PORT || 6969;
 const app = (0, express_1.default)();
 const start = () => __awaiter(void 0, void 0, void 0, function* () {
     yield db_config_1.AppDataSource.initialize();
-    console.log(process.env.POSTGRESQL_DB_NAME);
-    console.log(process.env.POSTGRESQL_USERNAME);
-    console.log(process.env.POSTGRESQL_PASSWORD);
-    console.log(process.env.POSTGRESQL_HOST);
     // app.use(cors({ origin: "http://localhost:3000", credentials: true }));
     app.use((0, cors_1.default)({ origin: process.env.CLIENT_URL, credentials: true }));
     app.use(express_1.default.json());
