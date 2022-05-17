@@ -26,9 +26,9 @@ class AuthController {
                     throw ApiError_1.ApiError.BadRequestError("Invalid username or password", isValid);
                 }
                 const { refreshToken, accessToken } = yield AuthService_1.AuthService.register(username, password);
-                console.log(refreshToken);
                 res.cookie("refreshToken", refreshToken, {
                     maxAge: 1000 * 60 * 60 * 24 * 30,
+                    secure: process.env.NODE_ENV !== "development",
                 });
                 res.json({ refreshToken, accessToken });
             }
@@ -51,6 +51,7 @@ class AuthController {
                 const { refreshToken, accessToken } = yield AuthService_1.AuthService.login(username, password);
                 res.cookie("refreshToken", refreshToken, {
                     maxAge: 1000 * 60 * 60 * 24 * 30,
+                    secure: process.env.NODE_ENV !== "development",
                 });
                 res.json({ refreshToken, accessToken });
             }

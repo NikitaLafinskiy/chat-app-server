@@ -21,9 +21,9 @@ export class AuthController {
         password
       );
 
-      console.log(refreshToken);
       res.cookie("refreshToken", refreshToken, {
         maxAge: 1000 * 60 * 60 * 24 * 30,
+        secure: process.env.NODE_ENV !== "development",
       });
       res.json({ refreshToken, accessToken });
     } catch (err) {
@@ -47,10 +47,11 @@ export class AuthController {
         username,
         password
       );
+
       res.cookie("refreshToken", refreshToken, {
         maxAge: 1000 * 60 * 60 * 24 * 30,
+        secure: process.env.NODE_ENV !== "development",
       });
-
       res.json({ refreshToken, accessToken });
     } catch (err) {
       next(err);

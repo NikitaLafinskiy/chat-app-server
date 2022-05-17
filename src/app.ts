@@ -13,7 +13,6 @@ const app = express();
 
 const start = async () => {
   await AppDataSource.initialize();
-  console.log(process.env.PGHOST);
   app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
