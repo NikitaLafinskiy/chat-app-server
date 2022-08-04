@@ -22,8 +22,12 @@ export class ChatController {
   static async getMessages(req: Request, res: Response, next: NextFunction) {
     try {
       const { conversationID } = req.body;
+      const { index } = req.params;
 
-      const { messages } = await ChatService.getMessages(conversationID);
+      const { messages } = await ChatService.getMessages(
+        conversationID,
+        parseInt(index)
+      );
 
       res.json({ messages });
     } catch (err) {

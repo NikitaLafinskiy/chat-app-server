@@ -18,12 +18,22 @@ export class ChatService {
   }
 
   static async getMessages(
-    conversationID: string
+    conversationID: string,
+    index: number
   ): Promise<{ messages: Message[] }> {
-    const conversation = await Conversation.findOne({
-      relations: ["messages"],
-      where: { id: conversationID },
-    });
+    const take = 30;
+    const skip = index * 30;
+
+    const conversation = (
+      await Promise.all(
+        await Conversation.find({
+          relations: ["messages"],
+          take,
+          skip,
+          where: { id: conversationID },
+        })
+      )
+    )[0];
 
     if (!conversation) {
       return { messages: [] };

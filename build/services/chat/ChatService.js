@@ -25,12 +25,16 @@ class ChatService {
             return { conversations: user.conversations };
         });
     }
-    static getMessages(conversationID) {
+    static getMessages(conversationID, index) {
         return __awaiter(this, void 0, void 0, function* () {
-            const conversation = yield entity_1.Conversation.findOne({
+            const take = 30;
+            const skip = index * 30;
+            const conversation = (yield Promise.all(yield entity_1.Conversation.find({
                 relations: ["messages"],
+                take,
+                skip,
                 where: { id: conversationID },
-            });
+            })))[0];
             if (!conversation) {
                 return { messages: [] };
             }

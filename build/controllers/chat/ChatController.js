@@ -28,7 +28,8 @@ class ChatController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { conversationID } = req.body;
-                const { messages } = yield ChatService_1.ChatService.getMessages(conversationID);
+                const { index } = req.params;
+                const { messages } = yield ChatService_1.ChatService.getMessages(conversationID, parseInt(index));
                 res.json({ messages });
             }
             catch (err) {
