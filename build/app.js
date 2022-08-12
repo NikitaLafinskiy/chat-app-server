@@ -19,11 +19,13 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const routes_1 = require("./routes");
 const error_middleware_1 = require("./middleware/error.middleware");
 const db_config_1 = require("./config/db.config");
+const redis_config_1 = require("./config/redis.config");
 require("dotenv").config();
 const PORT = process.env.PORT || 6969;
 const app = (0, express_1.default)();
 const start = () => __awaiter(void 0, void 0, void 0, function* () {
     yield db_config_1.AppDataSource.initialize();
+    yield redis_config_1.client.connect();
     app.use((0, cors_1.default)({ origin: process.env.CLIENT_URL, credentials: true }));
     app.use(express_1.default.json());
     app.use(express_1.default.urlencoded({ extended: true }));

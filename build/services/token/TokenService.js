@@ -22,9 +22,10 @@ var __rest = (this && this.__rest) || function (s, e) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TokenService = void 0;
 const jsonwebtoken_1 = require("jsonwebtoken");
-const entity_1 = require("../../entity");
 const ApiError_1 = require("../../exceptions/ApiError");
-const entity_2 = require("../../entity");
+const uuid_1 = require("uuid");
+const redis_config_1 = require("../../config/redis.config");
+const entity_1 = require("../../entity");
 const User_dto_1 = require("../../dtos/User.dto");
 class TokenService {
     static generateTokens(user) {
@@ -36,50 +37,45 @@ class TokenService {
         });
         return { accessToken, refreshToken };
     }
-    static saveRefreshToken(user, token) {
+    static saveRefreshToken(refreshToken, accessToken) {
         return __awaiter(this, void 0, void 0, function* () {
-            const refreshToken = yield entity_1.RefreshToken.findOne({
-                where: { user: { id: user.id } },
-            });
-            if (refreshToken) {
-                refreshToken.token = token;
-                refreshToken.save();
-                return { refreshToken };
-            }
-            const newToken = yield entity_1.RefreshToken.create({ token, user }).save();
-            return { refreshToken: newToken };
+            const refreshUUID = (0, uuid_1.v4)();
+            const accessUUID = (0, uuid_1.v4)();
+            yield redis_config_1.client.set(refreshUUID, refreshToken);
+            yield redis_config_1.client.set(accessUUID, accessToken);
+            return { refreshUUID, accessUUID };
         });
     }
-    static validateRefreshToken(token) {
+    static removeRefreshToken(refreshUUID) {
         return __awaiter(this, void 0, void 0, function* () {
-            const refreshToken = yield entity_1.RefreshToken.findOneBy({ token });
-            if (!refreshToken) {
-                throw ApiError_1.ApiError.UnauthorizedError("Refresh token doesn't exist (user is not registered)");
-            }
-            const isValidToken = (0, jsonwebtoken_1.verify)(token, process.env.JWT_REFRESH_SECRET);
-            if (!isValidToken) {
-                throw ApiError_1.ApiError.UnauthorizedError("Refresh token has expired");
-            }
-            return { isValid: true, refreshToken };
+            yield redis_config_1.client.del(refreshUUID);
+            return { msg: "Logged out successfully" };
         });
     }
-    static validateAccessToken(token) {
-        try {
-            const payload = (0, jsonwebtoken_1.verify)(token, process.env.JWT_ACCESS_TOKEN);
-            return { payload, isValid: true };
-        }
-        catch (err) {
-            return { payload: "", isValid: false };
-        }
-    }
-    static updateAccessToken(token) {
+    static updateTokens(refreshID) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { refreshToken } = yield this.validateRefreshToken(token);
-            const user = yield entity_2.User.findOneBy({ id: refreshToken.user.id });
+            const refreshTokenDB = yield redis_config_1.client.get(refreshID);
+            if (!refreshTokenDB) {
+                throw ApiError_1.ApiError.UnauthorizedError("Session expired please log in again");
+            }
+            const rtPayload = (0, jsonwebtoken_1.verify)(refreshTokenDB, process.env.JWT_REFRESH_SECRET);
+            const user = yield entity_1.User.findOneBy({ id: rtPayload.id });
             const userDTO = __rest(new User_dto_1.UserDTO(user), []);
-            const { accessToken } = this.generateTokens(userDTO);
-            return { accessToken };
+            if (!rtPayload) {
+                throw ApiError_1.ApiError.UnauthorizedError("Session expired please log in again");
+            }
+            const { refreshToken, accessToken } = this.generateTokens(userDTO);
+            const { refreshUUID, accessUUID } = yield this.saveRefreshToken(refreshToken, accessToken);
+            return { refreshUUID, accessUUID, user: userDTO };
         });
+    }
+    static extractTokenFromHeaders(req, keyword) {
+        const headers = req.headers.authorization;
+        if (!headers) {
+            throw ApiError_1.ApiError.BadRequestError("No authorization headers found on the request");
+        }
+        const token = headers.split(`${keyword} `)[1].split(",")[0];
+        return { token };
     }
 }
 exports.TokenService = TokenService;

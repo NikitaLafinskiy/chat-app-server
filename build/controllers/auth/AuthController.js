@@ -13,6 +13,7 @@ exports.AuthController = void 0;
 const AuthService_1 = require("../../services/auth/AuthService");
 const validators_1 = require("../../validators");
 const ApiError_1 = require("../../exceptions/ApiError");
+const TokenService_1 = require("../../services/token/TokenService");
 class AuthController {
     static register(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -25,12 +26,8 @@ class AuthController {
                 if (!isValid) {
                     throw ApiError_1.ApiError.BadRequestError("Invalid username or password", isValid);
                 }
-                const { refreshToken, accessToken } = yield AuthService_1.AuthService.register(username, password);
-                res.cookie("refreshToken", refreshToken, {
-                    maxAge: 1000 * 60 * 60 * 24 * 30,
-                    secure: process.env.NODE_ENV !== "development",
-                });
-                res.json({ refreshToken, accessToken });
+                const { refreshUUID, accessUUID } = yield AuthService_1.AuthService.register(username, password);
+                res.json({ refreshUUID, accessUUID });
             }
             catch (err) {
                 next(err);
@@ -48,12 +45,8 @@ class AuthController {
                 if (!isValid) {
                     throw ApiError_1.ApiError.BadRequestError("Invalid username or password", isValid);
                 }
-                const { refreshToken, accessToken } = yield AuthService_1.AuthService.login(username, password);
-                res.cookie("refreshToken", refreshToken, {
-                    maxAge: 1000 * 60 * 60 * 24 * 30,
-                    secure: process.env.NODE_ENV !== "development",
-                });
-                res.json({ refreshToken, accessToken });
+                const { refreshUUID, accessUUID, user } = yield AuthService_1.AuthService.login(username, password);
+                res.json({ refreshUUID, accessUUID, user });
             }
             catch (err) {
                 next(err);
@@ -63,8 +56,8 @@ class AuthController {
     static logout(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { refreshToken } = req.cookies;
-                const { msg } = yield AuthService_1.AuthService.logout(refreshToken);
+                const { token: refreshUUID } = TokenService_1.TokenService.extractTokenFromHeaders(req, "Refresh");
+                const { msg } = yield AuthService_1.AuthService.logout(refreshUUID);
                 res.clearCookie("refreshToken");
                 res.json({ msg });
             }
@@ -76,12 +69,12 @@ class AuthController {
     static refresh(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { refreshToken } = req.cookies;
-                if (!refreshToken) {
+                const { token: refreshID } = TokenService_1.TokenService.extractTokenFromHeaders(req, "Refresh");
+                if (!refreshID) {
                     throw ApiError_1.ApiError.UnauthorizedError("No token cookie is present");
                 }
-                const { accessToken } = yield AuthService_1.AuthService.refresh(refreshToken);
-                res.json({ accessToken });
+                const { accessUUID, refreshUUID, user } = yield AuthService_1.AuthService.refresh(refreshID);
+                res.json({ accessUUID, refreshUUID, user });
             }
             catch (err) {
                 next(err);
@@ -91,9 +84,8 @@ class AuthController {
     static getUser(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const headers = req.headers.authorization;
-                const token = headers.split(" ")[1];
-                const { user } = yield AuthService_1.AuthService.getUser(token);
+                const { token: accessUUID } = TokenService_1.TokenService.extractTokenFromHeaders(req, "Bearer");
+                const { user } = yield AuthService_1.AuthService.getUser(accessUUID);
                 res.json({ user });
             }
             catch (err) {

@@ -1,5 +1,6 @@
 import { Conversation, User, Message } from "../../entity";
 import { ApiError } from "../../exceptions/ApiError";
+import { AppDataSource } from "../../config/db.config";
 
 export class ChatService {
   static async getConversations(
@@ -22,23 +23,22 @@ export class ChatService {
     index: number
   ): Promise<{ messages: Message[] }> {
     const take = 30;
-    const skip = index * 30;
+    const skip = 30 * index;
 
-    const conversation = (
-      await Promise.all(
-        await Conversation.find({
-          relations: ["messages"],
-          take,
-          skip,
-          where: { id: conversationID },
-        })
-      )
-    )[0];
+    const messages = (
+      await AppDataSource.getRepository(Message)
+        .createQueryBuilder("message")
+        .where("message.conversation=:id", { id: conversationID })
+        .orderBy("message.id", "DESC")
+        .skip(skip)
+        .take(take)
+        .getMany()
+    ).reverse();
 
-    if (!conversation) {
+    if (!messages) {
       return { messages: [] };
     }
 
-    return { messages: conversation.messages };
+    return { messages };
   }
 }

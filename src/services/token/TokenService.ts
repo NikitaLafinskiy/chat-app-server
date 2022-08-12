@@ -1,9 +1,12 @@
 import { JwtPayload, Secret, sign, verify } from "jsonwebtoken";
 import { IUser } from "../../types/models/IUser.d";
-import { RefreshToken } from "../../entity";
 import { ApiError } from "../../exceptions/ApiError";
+import { v4 } from "uuid";
+import { client } from "../../config/redis.config";
+import { Request, Response } from "express";
 import { User } from "../../entity";
 import { UserDTO } from "../../dtos/User.dto";
+import { createNoSubstitutionTemplateLiteral } from "typescript";
 
 export class TokenService {
   static generateTokens(user: IUser): {
@@ -21,68 +24,68 @@ export class TokenService {
   }
 
   static async saveRefreshToken(
-    user: User,
-    token: string
-  ): Promise<{ refreshToken: RefreshToken }> {
-    const refreshToken = await RefreshToken.findOne({
-      where: { user: { id: user.id } },
-    });
+    refreshToken: string,
+    accessToken: string
+  ): Promise<{ refreshUUID: string; accessUUID: string }> {
+    const refreshUUID = v4();
+    const accessUUID = v4();
 
-    if (refreshToken) {
-      refreshToken.token = token;
-      refreshToken.save();
-      return { refreshToken };
-    }
+    await client.set(refreshUUID, refreshToken);
+    await client.set(accessUUID, accessToken);
 
-    const newToken = await RefreshToken.create({ token, user }).save();
-    return { refreshToken: newToken };
+    return { refreshUUID, accessUUID };
   }
 
-  static async validateRefreshToken(
-    token: string
-  ): Promise<{ refreshToken: RefreshToken; isValid: boolean }> {
-    const refreshToken = await RefreshToken.findOneBy({ token });
-    if (!refreshToken) {
-      throw ApiError.UnauthorizedError(
-        "Refresh token doesn't exist (user is not registered)"
-      );
+  static async removeRefreshToken(
+    refreshUUID: string
+  ): Promise<{ msg: string }> {
+    await client.del(refreshUUID);
+
+    return { msg: "Logged out successfully" };
+  }
+
+  static async updateTokens(
+    refreshID: string
+  ): Promise<{ accessUUID: string; refreshUUID: string; user: IUser }> {
+    const refreshTokenDB = await client.get(refreshID);
+
+    if (!refreshTokenDB) {
+      throw ApiError.UnauthorizedError("Session expired please log in again");
     }
 
-    const isValidToken = verify(
-      token,
+    const rtPayload = verify(
+      refreshTokenDB,
       process.env.JWT_REFRESH_SECRET as Secret
+    ) as IUser;
+
+    const user = await User.findOneBy({ id: rtPayload.id });
+    const { ...userDTO } = new UserDTO(user!);
+
+    if (!rtPayload) {
+      throw ApiError.UnauthorizedError("Session expired please log in again");
+    }
+
+    const { refreshToken, accessToken } = this.generateTokens(userDTO);
+    const { refreshUUID, accessUUID } = await this.saveRefreshToken(
+      refreshToken,
+      accessToken
     );
 
-    if (!isValidToken) {
-      throw ApiError.UnauthorizedError("Refresh token has expired");
-    }
-
-    return { isValid: true, refreshToken };
+    return { refreshUUID, accessUUID, user: userDTO };
   }
 
-  static validateAccessToken(token: string): {
-    isValid: boolean;
-    payload: JwtPayload | string;
-  } {
-    try {
-      const payload = verify(token, process.env.JWT_ACCESS_TOKEN as Secret);
-
-      return { payload, isValid: true };
-    } catch (err) {
-      return { payload: "", isValid: false };
+  static extractTokenFromHeaders(
+    req: Request,
+    keyword: string
+  ): { token: string } {
+    const headers = req.headers.authorization;
+    if (!headers) {
+      throw ApiError.BadRequestError(
+        "No authorization headers found on the request"
+      );
     }
-  }
+    const token = headers.split(`${keyword} `)[1].split(",")[0];
 
-  static async updateAccessToken(
-    token: string
-  ): Promise<{ accessToken: string }> {
-    const { refreshToken } = await this.validateRefreshToken(token);
-
-    const user = await User.findOneBy({ id: refreshToken.user.id });
-    const { ...userDTO } = new UserDTO(user as User);
-
-    const { accessToken } = this.generateTokens(userDTO);
-
-    return { accessToken };
+    return { token };
   }
 }

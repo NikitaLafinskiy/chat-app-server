@@ -10,20 +10,27 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authHandler = void 0;
+const jsonwebtoken_1 = require("jsonwebtoken");
+const redis_config_1 = require("../config/redis.config");
 const ApiError_1 = require("../exceptions/ApiError");
 const TokenService_1 = require("../services/token/TokenService");
 const authHandler = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const authHeader = req.headers.authorization;
-        if (!authHeader) {
-            throw ApiError_1.ApiError.UnauthorizedError("The auth header isn't present on the request");
+        const { token: accessUUID } = TokenService_1.TokenService.extractTokenFromHeaders(req, "Bearer");
+        const accessToken = yield redis_config_1.client.get(accessUUID);
+        if (!accessToken) {
+            res.redirect("/api/auth/refresh");
+            return;
         }
-        const token = authHeader.split(" ")[1];
-        const { isValid } = TokenService_1.TokenService.validateAccessToken(token);
-        if (!isValid) {
-            throw ApiError_1.ApiError.UnauthorizedError("The token is invalid");
-        }
-        next();
+        (0, jsonwebtoken_1.verify)(accessToken, process.env.JWT_ACCESS_TOKEN, (err, decoded) => {
+            if (err) {
+                res.redirect("/api/auth/refresh");
+                return;
+            }
+            if (decoded) {
+                next();
+            }
+        });
     }
     catch (err) {
         next(ApiError_1.ApiError.UnauthorizedError("Token is invalid"));

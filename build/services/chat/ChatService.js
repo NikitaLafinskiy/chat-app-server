@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatService = void 0;
 const entity_1 = require("../../entity");
 const ApiError_1 = require("../../exceptions/ApiError");
+const db_config_1 = require("../../config/db.config");
 class ChatService {
     static getConversations(userID) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28,17 +29,18 @@ class ChatService {
     static getMessages(conversationID, index) {
         return __awaiter(this, void 0, void 0, function* () {
             const take = 30;
-            const skip = index * 30;
-            const conversation = (yield Promise.all(yield entity_1.Conversation.find({
-                relations: ["messages"],
-                take,
-                skip,
-                where: { id: conversationID },
-            })))[0];
-            if (!conversation) {
+            const skip = 30 * index;
+            const messages = (yield db_config_1.AppDataSource.getRepository(entity_1.Message)
+                .createQueryBuilder("message")
+                .where("message.conversation=:id", { id: conversationID })
+                .orderBy("message.id", "DESC")
+                .skip(skip)
+                .take(take)
+                .getMany()).reverse();
+            if (!messages) {
                 return { messages: [] };
             }
-            return { messages: conversation.messages };
+            return { messages };
         });
     }
 }

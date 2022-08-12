@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from "express";
+import { verify } from "jsonwebtoken";
+import { client } from "../config/redis.config";
 import { ApiError } from "../exceptions/ApiError";
 import { TokenService } from "../services/token/TokenService";
 
@@ -8,20 +10,30 @@ export const authHandler = async (
   next: NextFunction
 ) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      throw ApiError.UnauthorizedError(
-        "The auth header isn't present on the request"
-      );
-    }
-    const token = authHeader.split(" ")[1];
+    const { token: accessUUID } = TokenService.extractTokenFromHeaders(
+      req,
+      "Bearer"
+    );
+    const accessToken = await client.get(accessUUID);
 
-    const { isValid } = TokenService.validateAccessToken(token);
-    if (!isValid) {
-      throw ApiError.UnauthorizedError("The token is invalid");
+    if (!accessToken) {
+      res.redirect("/api/auth/refresh");
+      return;
     }
 
-    next();
+    verify(
+      accessToken,
+      process.env.JWT_ACCESS_TOKEN as string,
+      (err, decoded) => {
+        if (err) {
+          res.redirect("/api/auth/refresh");
+          return;
+        }
+        if (decoded) {
+          next();
+        }
+      }
+    );
   } catch (err) {
     next(ApiError.UnauthorizedError("Token is invalid"));
   }

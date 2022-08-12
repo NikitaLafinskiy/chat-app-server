@@ -8,7 +8,4 @@ const ChatController_1 = require("../../controllers/chat/ChatController");
 const router = express_1.default.Router();
 router.get("/api/chat/conversations/:userID", ChatController_1.ChatController.getConversations);
 router.post("/api/chat/messages/:index", ChatController_1.ChatController.getMessages);
-router.get("/", (req, res) => {
-    res.send("Welcome");
-});
 exports.default = router;

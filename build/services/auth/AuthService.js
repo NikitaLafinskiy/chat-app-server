@@ -27,6 +27,8 @@ const User_dto_1 = require("../../dtos/User.dto");
 const bcrypt_1 = require("bcrypt");
 const TokenService_1 = require("../token/TokenService");
 const ApiError_1 = require("../../exceptions/ApiError");
+const jsonwebtoken_1 = require("jsonwebtoken");
+const redis_config_1 = require("../../config/redis.config");
 class AuthService {
     static register(username, password) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -43,8 +45,8 @@ class AuthService {
             }).save();
             const userDTO = __rest(new User_dto_1.UserDTO(user), []);
             const { refreshToken, accessToken } = TokenService_1.TokenService.generateTokens(userDTO);
-            yield TokenService_1.TokenService.saveRefreshToken(user, refreshToken);
-            return { refreshToken, accessToken, user: userDTO };
+            const { refreshUUID, accessUUID } = yield TokenService_1.TokenService.saveRefreshToken(refreshToken, accessToken);
+            return { refreshUUID, accessUUID, user: userDTO };
         });
     }
     static login(username, password) {
@@ -59,30 +61,29 @@ class AuthService {
             }
             const userDTO = __rest(new User_dto_1.UserDTO(user), []);
             const { refreshToken, accessToken } = TokenService_1.TokenService.generateTokens(userDTO);
-            yield TokenService_1.TokenService.saveRefreshToken(user, refreshToken);
-            return { refreshToken, accessToken, user: userDTO };
+            const { refreshUUID, accessUUID } = yield TokenService_1.TokenService.saveRefreshToken(refreshToken, accessToken);
+            return { refreshUUID, accessUUID, user: userDTO };
         });
     }
-    static logout(token) {
+    static logout(refreshUUID) {
         return __awaiter(this, void 0, void 0, function* () {
-            const refreshToken = yield entity_1.RefreshToken.findOneBy({ token });
-            if (!refreshToken) {
-                throw ApiError_1.ApiError.BadRequestError("User is already logged out");
+            const { msg } = yield TokenService_1.TokenService.removeRefreshToken(refreshUUID);
+            return { msg };
+        });
+    }
+    static refresh(refreshID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { accessUUID, refreshUUID, user } = yield TokenService_1.TokenService.updateTokens(refreshID);
+            return { accessUUID, refreshUUID, user };
+        });
+    }
+    static getUser(accessUUID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const token = yield redis_config_1.client.get(accessUUID);
+            if (!token) {
+                throw ApiError_1.ApiError.UnauthorizedError("No access token or id present");
             }
-            yield refreshToken.remove();
-            return { msg: "User logged out" };
-        });
-    }
-    static refresh(token) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const { accessToken } = yield TokenService_1.TokenService.updateAccessToken(token);
-            return { accessToken };
-        });
-    }
-    static getUser(token) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const { payload } = TokenService_1.TokenService.validateAccessToken(token);
-            const userPayload = payload;
+            const userPayload = (0, jsonwebtoken_1.verify)(token, process.env.JWT_ACCESS_TOKEN);
             const user = yield entity_1.User.findOneBy({ id: userPayload.id });
             if (!user) {
                 throw ApiError_1.ApiError.UnauthorizedError("No user with such token");
