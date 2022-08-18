@@ -25,7 +25,7 @@ const PORT = process.env.PORT || 6969;
 const app = (0, express_1.default)();
 const start = () => __awaiter(void 0, void 0, void 0, function* () {
     yield db_config_1.AppDataSource.initialize();
-    yield redis_config_1.client.connect();
+    yield (0, redis_config_1.invokeRedisClient)();
     app.use((0, cors_1.default)({ origin: process.env.CLIENT_URL, credentials: true }));
     app.use(express_1.default.json());
     app.use(express_1.default.urlencoded({ extended: true }));

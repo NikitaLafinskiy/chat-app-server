@@ -1,4 +1,4 @@
-import { createClient } from "redis";
+import { createClient, RedisClientType } from "redis";
 
 const redisOptions =
   process.env.NODE_ENV === "production"
@@ -10,4 +10,9 @@ const redisOptions =
         },
       };
 
-export const client = createClient(redisOptions);
+export let client: RedisClientType;
+
+export const invokeRedisClient = async () => {
+  client = createClient(redisOptions);
+  await client.connect();
+};

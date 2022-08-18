@@ -15,10 +15,10 @@ export const AppDataSource = new DataSource({
   entities: [User, RefreshToken, Conversation, Message],
   subscribers: [],
   migrations: ["./migrations/*.js"],
-  ssl: process.env.PGHOST ? true : false,
-  extra: {
-    ssl: {
-      rejectUnauthorized: false,
-    },
-  },
+  // ssl: process.env.PGHOST ? true : false,
+  // extra: {
+  //   ssl: {
+  //     rejectUnauthorized: false,
+  //   },
+  // },
 });

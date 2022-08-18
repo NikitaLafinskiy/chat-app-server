@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 import { routesInit } from "./routes";
 import { errHandler } from "./middleware/error.middleware";
 import { AppDataSource } from "./config/db.config";
-import { client } from "./config/redis.config";
+import { invokeRedisClient } from "./config/redis.config";
 
 require("dotenv").config();
 const PORT = process.env.PORT || 6969;
@@ -14,7 +14,7 @@ const app = express();
 
 const start = async () => {
   await AppDataSource.initialize();
-  await client.connect();
+  await invokeRedisClient();
   app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
