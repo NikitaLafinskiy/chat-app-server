@@ -24,7 +24,7 @@ const initSocketListeners = (socket, io) => {
         yield ConversationListeners_1.ConversationListeners.sendMessage(data, socket);
     }));
     socket.on("joinUser", (data) => {
-        ConversationListeners_1.ConversationListeners.joinUser(data, socket, io);
+        ConversationListeners_1.ConversationListeners.joinUser(data, socket);
     });
 };
 exports.initSocketListeners = initSocketListeners;

@@ -13,10 +13,7 @@ exports.ConversationListeners = void 0;
 const ConversationService_1 = require("../../../services/socket/ConversationService");
 const uuid_1 = require("uuid");
 class ConversationListeners {
-    static joinUserOnConnection() {
-        return __awaiter(this, void 0, void 0, function* () { });
-    }
-    static joinUser(conversationID, socket, io) {
+    static joinUser(conversationID, socket) {
         socket.join(conversationID);
     }
     static createConversation(data, socket) {

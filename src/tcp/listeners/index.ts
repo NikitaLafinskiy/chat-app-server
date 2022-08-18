@@ -16,6 +16,6 @@ export const initSocketListeners = (socket: SocketType, io: Server) => {
     await ConversationListeners.sendMessage(data, socket);
   });
   socket.on("joinUser", (data) => {
-    ConversationListeners.joinUser(data, socket, io);
+    ConversationListeners.joinUser(data, socket);
   });
 };

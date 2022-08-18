@@ -3,12 +3,9 @@ import { SocketType } from "../../../types/socket";
 import { ConversationService } from "../../../services/socket/ConversationService";
 import { v4 } from "uuid";
 import { IConversation } from "../../../types/models/IConversation";
-import { Server } from "socket.io";
 
 export class ConversationListeners {
-  static async joinUserOnConnection() {}
-
-  static joinUser(conversationID: string, socket: SocketType, io: Server) {
+  static joinUser(conversationID: string, socket: SocketType) {
     socket.join(conversationID);
   }
 
