@@ -2,7 +2,7 @@ import { createClient, RedisClientType } from "redis";
 
 const redisOptions =
   process.env.NODE_ENV === "production"
-    ? { url: process.env.REDIS_URL }
+    ? { url: process.env.REDIS_URL, disableOfflineQueue: true }
     : {
         socket: {
           port: parseInt(process.env.REDIS_PORT!),
