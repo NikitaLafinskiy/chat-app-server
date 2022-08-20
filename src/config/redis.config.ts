@@ -14,5 +14,8 @@ export let client: RedisClientType;
 
 export const invokeRedisClient = async () => {
   client = createClient(redisOptions);
+  client.on("error", (err: Error) => {
+    console.error(err);
+  });
   await client.connect();
 };
