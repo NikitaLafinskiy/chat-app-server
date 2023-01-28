@@ -17,8 +17,8 @@ export class User extends BaseEntity {
   username: string;
   @Column()
   password: string;
-  @OneToOne(() => RefreshToken, (refreshToken) => refreshToken.token)
-  refreshToken: RefreshToken["token"];
+  @OneToOne(() => RefreshToken, (refreshToken) => refreshToken.user)
+  refreshToken: RefreshToken;
   @Column({ default: false })
   isActivated: boolean;
   @Column()

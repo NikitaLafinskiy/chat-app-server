@@ -1,6 +1,6 @@
-import { Conversation, User } from "../../entity";
+import { Conversation, Message } from "../../entity";
 import { IUser } from "../../types/models/IUser";
-import { ApiError } from "../../exceptions/ApiError";
+import { IConversation } from "../../types/models/IConversation";
 
 export class ConversationService {
   static async createConversation(
@@ -16,19 +16,20 @@ export class ConversationService {
       isPrivate,
     }).save();
 
-    for (let i = 0; i < users.length; i++) {
-      const user = await User.findOneBy({ id: users[i].id });
-      console.log(user);
-
-      if (!user) {
-        throw ApiError.BadRequestError(
-          "User that is being added to a conversation doesnt exist"
-        );
-      }
-
-      user.conversations.push(newConversation);
-    }
-
     return newConversation;
+  }
+
+  static async createMessage(
+    body: string,
+    from: IUser,
+    conversation: IConversation
+  ) {
+    const newMessage = await Message.create({
+      body,
+      from: from.id,
+      conversation,
+    }).save();
+
+    return { newMessage };
   }
 }

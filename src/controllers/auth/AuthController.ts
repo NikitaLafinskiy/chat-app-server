@@ -2,28 +2,27 @@ import { Request, Response, NextFunction } from "express";
 import { AuthService } from "../../services/auth/AuthService";
 import { AuthValidators } from "../../validators";
 import { ApiError } from "../../exceptions/ApiError";
+import { TokenService } from "../../services/token/TokenService";
 
 export class AuthController {
   static async register(req: Request, res: Response, next: NextFunction) {
     try {
       const { username, password } = req.body;
-      console.log(req.body);
-      const isValid = AuthValidators.registerValidator.validate({
+      const isValid = await AuthValidators.registerValidator.validate({
         username,
         password,
       });
+
       if (!isValid) {
         throw ApiError.BadRequestError("Invalid username or password", isValid);
       }
-      const { refreshToken, accessToken } = await AuthService.register(
+
+      const { refreshUUID, accessUUID } = await AuthService.register(
         username,
         password
       );
 
-      res.cookie("refreshToken", refreshToken, {
-        maxAge: 1000 * 60 * 60 * 24 * 30,
-      });
-      res.json({ refreshToken, accessToken });
+      res.json({ refreshUUID, accessUUID });
     } catch (err) {
       next(err);
     }
@@ -32,23 +31,21 @@ export class AuthController {
   static async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { username, password } = req.body;
-      const isValid = AuthValidators.registerValidator.validate({
+      const isValid = await AuthValidators.registerValidator.validate({
         username,
         password,
       });
+
       if (!isValid) {
         throw ApiError.BadRequestError("Invalid username or password", isValid);
       }
-      const { refreshToken, accessToken } = await AuthService.login(
+
+      const { refreshUUID, accessUUID, user } = await AuthService.login(
         username,
         password
       );
 
-      res.cookie("refreshToken", refreshToken, {
-        maxAge: 1000 * 60 * 60 * 24 * 30,
-      });
-
-      res.json({ refreshToken, accessToken });
+      res.json({ refreshUUID, accessUUID, user });
     } catch (err) {
       next(err);
     }
@@ -56,8 +53,11 @@ export class AuthController {
 
   static async logout(req: Request, res: Response, next: NextFunction) {
     try {
-      const { refreshToken } = req.cookies;
-      const { msg } = await AuthService.logout(refreshToken);
+      const { token: refreshUUID } = TokenService.extractTokenFromHeaders(
+        req,
+        "Refresh"
+      );
+      const { msg } = await AuthService.logout(refreshUUID);
 
       res.clearCookie("refreshToken");
 
@@ -69,12 +69,17 @@ export class AuthController {
 
   static async refresh(req: Request, res: Response, next: NextFunction) {
     try {
-      const { refreshToken } = req.cookies;
-      if (!refreshToken) {
+      const { token: refreshID } = TokenService.extractTokenFromHeaders(
+        req,
+        "Refresh"
+      );
+      if (!refreshID) {
         throw ApiError.UnauthorizedError("No token cookie is present");
       }
-      const { accessToken } = await AuthService.refresh(refreshToken);
-      res.json({ accessToken });
+      const { accessUUID, refreshUUID, user } = await AuthService.refresh(
+        refreshID
+      );
+      res.json({ accessUUID, refreshUUID, user });
     } catch (err) {
       next(err);
     }
@@ -82,10 +87,11 @@ export class AuthController {
 
   static async getUser(req: Request, res: Response, next: NextFunction) {
     try {
-      const headers = req.headers.authorization as string;
-      const token = headers.split(" ")[1];
-
-      const { user } = await AuthService.getUser(token);
+      const { token: accessUUID } = TokenService.extractTokenFromHeaders(
+        req,
+        "Bearer"
+      );
+      const { user } = await AuthService.getUser(accessUUID);
 
       res.json({ user });
     } catch (err) {
