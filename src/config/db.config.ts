@@ -1,8 +1,8 @@
-import { DataSource } from "typeorm";
+import { DataSource, DataSourceOptions } from "typeorm";
 import { User, RefreshToken, Conversation, Message } from "../entity";
 require("dotenv").config();
 
-export const AppDataSource = new DataSource({
+const options: DataSourceOptions = {
   type: "postgres",
   host: process.env.PGHOST || "localhost",
   port: 5432,
@@ -15,10 +15,19 @@ export const AppDataSource = new DataSource({
   entities: [User, RefreshToken, Conversation, Message],
   subscribers: [],
   migrations: ["./migrations/*.js"],
-  ssl: process.env.PGHOST ? true : false,
-  extra: {
-    ssl: {
-      rejectUnauthorized: false,
-    },
-  },
-});
+};
+
+const dbOptions: DataSourceOptions =
+  process.env.NODE_ENV === "production"
+    ? {
+        ...options,
+        ssl: process.env.PGHOST ? true : false,
+        extra: {
+          ssl: {
+            rejectUnauthorized: false,
+          },
+        },
+      }
+    : { ...options };
+
+export const AppDataSource = new DataSource(dbOptions);
