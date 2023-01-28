@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.invokeRedisClient = exports.client = void 0;
 const redis_1 = require("redis");
 const redisOptions = process.env.NODE_ENV === "production"
-    ? { url: process.env.REDIS_URL }
+    ? { url: process.env.REDIS_URL, disableOfflineQueue: true }
     : {
         socket: {
             port: parseInt(process.env.REDIS_PORT),
@@ -21,6 +21,9 @@ const redisOptions = process.env.NODE_ENV === "production"
     };
 const invokeRedisClient = () => __awaiter(void 0, void 0, void 0, function* () {
     exports.client = (0, redis_1.createClient)(redisOptions);
+    exports.client.on("error", (err) => {
+        console.error(err);
+    });
     yield exports.client.connect();
 });
 exports.invokeRedisClient = invokeRedisClient;
